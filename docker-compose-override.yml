@@ -1,0 +1,9 @@
+services:
+  db_pg:
+    extends:
+      file: docker-compose.yml
+      service: db
+    ports:
+      - "5432:5432"
+volumes:
+  db_data:
