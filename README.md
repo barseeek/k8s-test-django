@@ -75,3 +75,31 @@ $ docker compose build web
 `ALLOWED_HOSTS` -- настройка Django со списком разрешённых адресов. Если запрос прилетит на другой адрес, то сайт ответит ошибкой 400. Можно перечислить несколько адресов через запятую, например `127.0.0.1,192.168.0.1,site.test`. [Документация Django](https://docs.djangoproject.com/en/3.2/ref/settings/#allowed-hosts).
 
 `DATABASE_URL` -- адрес для подключения к базе данных PostgreSQL. Другие СУБД сайт не поддерживает. [Формат записи](https://github.com/jacobian/dj-database-url#url-schema).
+
+## Создание Secrets
+
+Для создания Secrets файла необходимо создать YAML-файл следующего содержания:
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: django-secret
+type: Opaque
+data:
+  ALLOWED_HOSTS: your_allowed_hosts_base64_encode
+  DATABASE_URL: your_db_url_base64_encode
+  SECRET_KEY: your_secret_key_base64_encode
+  DEBUG: your_debug_base64_encode
+```
+Для кодирования данных в base64 в Windows воспользуйтесь командой powershell:
+```powershell
+[Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes(‘text_to_encode’))
+```
+Для кодирования данных в base64 в Linux воспользуйтесь командой powershell:
+```shell
+echo -n 'text_to_encode' | base64```
+```
+Затем, в кластере необходимо создать Secrets файл:
+```shell
+kubectl apply -f path/to/your/secrets.yaml
+```
