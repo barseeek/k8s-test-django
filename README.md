@@ -132,12 +132,6 @@ kubectl apply -f path/to/your/ingress.yaml
 kubectl apply -f path/to/deployment_service.yaml
 ```
 
-Если же вы запускаете сайт локально, добавьте ingress:
-
-```shell-session
-kubectl apply -f ./kubernetes/ingress/django-ingress.yaml
-```
-
 Добавьте данный текст в файл hosts:
 
 ```
@@ -145,3 +139,13 @@ kubectl apply -f ./kubernetes/ingress/django-ingress.yaml
 ```
 
 После этого сайт будет доступен по адресу, который вы указали.
+
+## Запуск CronJob
+Для ежемесячной очистки сессий Django, воспользуйтесь командой:
+```shell
+kubectl apply -f path/to/cronjob-clearsessions.yaml
+```
+Для запуска в любой момент времени Job из CronJob выполните команду:
+```shell
+kubectl create job --from=cronjob/<cronjob-name> <job-name> -n <namespace-name>
+```
