@@ -103,3 +103,45 @@ echo -n 'text_to_encode' | base64```
 ```shell
 kubectl apply -f path/to/your/secrets.yaml
 ```
+## Создание Ingress
+Создадим YAML-файл для Ingress:
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: your_ingress_name
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: your_host
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: your_service_name
+                port:
+                  number: your-port
+```
+Для создания Ingress запускаем:
+
+```shell
+minikube addons enable ingress
+kubectl apply -f path/to/your/ingress.yaml
+kubectl apply -f path/to/deployment_service.yaml
+```
+
+Если же вы запускаете сайт локально, добавьте ingress:
+
+```shell-session
+kubectl apply -f ./kubernetes/ingress/django-ingress.yaml
+```
+
+Добавьте данный текст в файл hosts:
+
+```
+[вывод команды minikube ip] your-host-name
+```
+
+После этого сайт будет доступен по адресу, который вы указали.
