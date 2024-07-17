@@ -160,3 +160,11 @@ kubectl apply -f path/to/job-migrate.yaml
 kubectl get pods
 kubectl logs migrate-pod-name
 ```
+## Создание БД внутри кластера
+Для создания БД внутри кластера использовался [Helm](https://helm.sh/).
+
+После установки Helm для скачивания пакета Postgresql и подключения к БД выполните:
+```shell
+helm install your-pod-name oci://registry-1.docker.io/bitnamicharts/postgresql --set auth.username=your-name --set auth.password=your-password
+psql -h your-minikube-ip -U your-username -p 5432 -W
+```
