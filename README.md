@@ -149,3 +149,14 @@ kubectl apply -f path/to/cronjob-clearsessions.yaml
 ```shell
 kubectl create job --from=cronjob/<cronjob-name> <job-name> -n <namespace-name>
 ```
+
+## Запуск Job
+Для запуска команды migrate в контейнере выполните:
+```shell
+kubectl apply -f path/to/job-migrate.yaml
+```
+Для проверки вывода команды migrate выполните:
+```shell
+kubectl get pods
+kubectl logs migrate-pod-name
+```
