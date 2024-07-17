@@ -76,6 +76,35 @@ $ docker compose build web
 
 `DATABASE_URL` -- адрес для подключения к базе данных PostgreSQL. Другие СУБД сайт не поддерживает. [Формат записи](https://github.com/jacobian/dj-database-url#url-schema).
 
+## Создание кластера
+Скачайте [Minikube](https://minikube.sigs.k8s.io/docs/start/?arch=%2Fwindows%2Fx86-64%2Fstable%2F.exe+download).
+Для запуска кластера выполните:
+```shell
+minikube start --driver=virtualbox
+```
+Minikube запускает свой собственный экземпляр Docker демона внутри виртуальной машины. Чтобы управлять контейнерами, созданными внутри этой VM, с вашей локальной машины через docker команды, необходимо перенастроить Docker клиент на использование демона Minikube. 
+Для windows выполните:
+```shell
+minikube docker-env --shell powershell | Invoke-Expression
+```
+Для linux выполните:
+```shell
+eval $(minikube docker-env)
+```
+Далее, соберите образ и загрузите его в Minikube
+```shell
+docker compose build
+minikube image build . -t django_app
+```
+## Создание БД внутри кластера
+Для создания БД внутри кластера использовался [Helm](https://helm.sh/).
+
+После установки Helm для скачивания пакета Postgresql и подключения к БД выполните:
+```shell
+helm install your-pod-name --set auth.username=your-name --set auth.password=your-password --set auth.database=your-database-name oci://registry-1.docker.io/bitnamicharts/postgresql 
+```
+`DATABASE_URL` для запуска БД должна иметь значение `postgres://[your-name]:[your-password]@[your-pod-name]-postgresql:5432/[your-database-name]` 
+
 ## Создание Secrets
 
 Для создания Secrets файла необходимо создать YAML-файл следующего содержания:
