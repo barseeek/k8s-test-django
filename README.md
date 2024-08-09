@@ -4,6 +4,19 @@
 
 Внутри контейнера Django приложение запускается с помощью Nginx Unit, не путать с Nginx. Сервер Nginx Unit выполняет сразу две функции: как веб-сервер он раздаёт файлы статики и медиа, а в роли сервера-приложений он запускает Python и Django. Таким образом Nginx Unit заменяет собой связку из двух сервисов Nginx и Gunicorn/uWSGI. [Подробнее про Nginx Unit](https://unit.nginx.org/).
 
+## Оглавление
+- [Как подготовить окружение к локальной разработке](#как-подготовить-окружение-к-локальной-разработке)
+  - [Как запустить сайт для локальной разработки](#как-запустить-сайт-для-локальной-разработки)
+  - [Как вести разработку](#как-вести-разработку)
+  - [Переменные окружения](#переменные-окружения)
+  - [Создание кластера](#создание-кластера)
+  - [Создание БД внутри кластера](#создание-бд-внутри-кластера)
+  - [Создание Secrets](#создание-secrets)
+  - [Создание Ingress](#создание-ingress)
+  - [Запуск CronJob](#запуск-cronjob)
+  - [Запуск Job](#запуск-job)
+- [Разработка в Yandex Cloud](#разработка-в-yandex-cloud)
+
 ## Как подготовить окружение к локальной разработке
 
 Код в репозитории полностью докеризирован, поэтому для запуска приложения вам понадобится Docker. Инструкции по его установке ищите на официальных сайтах:
@@ -189,3 +202,25 @@ kubectl apply -f path/to/job-migrate.yaml
 kubectl get pods
 kubectl logs migrate-pod-name
 ```
+
+## Разработка в Yandex Cloud
+В качестве UI для терминала можно использовать [k9s](https://k9scli.io/), в качестве UI для k8s [Lens Desktop](https://k8slens.dev/)
+Для запуска сервиса в yandex cloud необходимо:
+1. Подключиться к кластеру Yandex cloud
+   1. [Установите и инициализируйте интерфейс командной строки Yandex Cloud](https://yandex.cloud/ru/docs/cli/quickstart#install)
+   2. [Добавьте учетные данные](https://yandex.cloud/ru/docs/managed-kubernetes/operations/connect#kubectl-connect) кластера Kubernetes в конфигурационный файл kubectl:
+     ```
+     yc managed-kubernetes cluster get-credentials --id catvr0kq2b7bn0v8k2r9 --external
+     ```
+2. Используйте утилиту kubectl для работы с кластером Kubernetes:
+    ```
+      kubectl get cluster-info
+      kubectl get pods --namespace=<your-namespace>
+    ```
+
+### Запуск Service и Deployment из манифеста
+После подключения к кластеру, запустите создание Service и Deployment из манифеста:
+```
+kubectl create --namespace=<your-namespace> -f ./path/to/deployment_service.yaml
+```
+Теперь nginx доступен по адресу хоста вашего ALB, в моем случае https://edu-evil-panini.sirius-k8s.dvmn.org/
