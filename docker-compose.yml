@@ -12,7 +12,7 @@ services:
 
   web:
     build: backend_main_django
-    image: django_app
+    image: django_app2
     volumes:
       - ./backend_main_django:/code
     environment: 

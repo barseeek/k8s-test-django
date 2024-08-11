@@ -16,8 +16,10 @@
   - [Запуск CronJob](#запуск-cronjob)
   - [Запуск Job](#запуск-job)
 - [Как подготовить dev-окружение](#как-подготовить-dev-окружение)
-  - [Запуск Service и Deployment из манифеста](#запуск-service-и-deployment-из-манифеста)
+  - [Получение SSL-сертификата для подключения к базе данных PostgreSQL](#получение-ssl-сертификата-для-подключения-к-базе-данных-postgresql)
   - [Создание Secrets и Pod с SSL-сертификатом](#создание-secrets-и-pod-с-ssl-сертификатом)
+  - [Образ в docker registry](#образ-в-docker-registry)
+- [Запуск проекта в Yandex Cloud](#запуск-проекта-в-yandex-cloud)
 
 ## Как подготовить окружение к локальной разработке
 
@@ -206,6 +208,7 @@ kubectl logs migrate-pod-name
 ```
 
 ## Как подготовить dev-окружение
+
 В качестве UI для терминала можно использовать [k9s](https://k9scli.io/), в качестве UI для k8s [Lens Desktop](https://k8slens.dev/)
 Для запуска сервиса в yandex cloud необходимо:
 1. Подключиться к кластеру Yandex cloud
@@ -219,13 +222,30 @@ kubectl logs migrate-pod-name
       kubectl get cluster-info
       kubectl get pods --namespace=<your-namespace>
     ```
+### Описание кластера
+ - Выделен домен edu-evil-panini.sirius-k8s.dvmn.org. Запросы обрабатывает Yandex Application Load Balancer.
+ - В кластере K8s создан отдельный namespace edu-evil-panini.
+ - В Yandex Managed Service for PostgreSQL создана база данных edu-evil-panini. Доступы лежат в секрете K8s
+ - В Yandex Application Load Balancer создан роутер edu-evil-panini. Он распределяет входящие сетевые запросы на разные NodePort кластера K8s.
+ -  Настроен редирект HTTP → HTTPS.
+    Схема роутинга: https://edu-evil-panini.sirius-k8s.dvmn.org/ → NodePort 30331
 
-### Запуск Service и Deployment из манифеста
-После подключения к кластеру, запустите создание Service и Deployment из манифеста:
+### Получение SSL-сертификата для подключения к базе данных PostgreSQL
+PostgreSQL-хосты с публичным доступом поддерживают только шифрованные соединения. Чтобы использовать их, получите SSL-сертификат
+
+* Linux(Bash)/macOS(Zsh)
+```shell
+mkdir -p ~/.postgresql && \
+wget "https://storage.yandexcloud.net/cloud-certs/CA.pem" \
+     --output-document ~/.postgresql/root.crt && \
+chmod 0600 ~/.postgresql/root.crt
 ```
-kubectl create --namespace=<your-namespace> -f ./path/to/deployment_service.yaml
+* Windows(PowerShell)
+```shell
+mkdir $HOME\.postgresql; curl.exe -o $HOME\.postgresql\root.crt https://storage.yandexcloud.net/cloud-certs/CA.pem
 ```
-Теперь nginx доступен по адресу хоста вашего ALB, в моем случае https://edu-evil-panini.sirius-k8s.dvmn.org/
+
+Сертификат будет сохранен в файле `$HOME\.postgresql\root.crt`
 
 ### Создание Secrets и Pod с SSL-сертификатом
 Для создания secrets с SSL сертификатом, закодируйте ваш сертификат в формат base64
@@ -246,3 +266,45 @@ kubectl apply -f .\ssl_secret.yaml --namespace=<yor-namespace>
 ```shell
 kubectl apply -f .\ubuntu_pod_with_secret.yaml --namespace=<yor-namespace>
 ```
+
+### Образ в docker registry
+Необходимо разместить образ приложения в [dockerhub](https://hub.docker.com):
+* Соберите образ:
+```shell
+docker build -t image_name:tag_name -f path/to/dockerfile .
+```
+* Тегируйте образ:
+```shell
+docker tag image_name:tag_name repo_name/image_name:tag_name
+```
+* Загрузите образ в Docker Hub:
+```shell
+docker push repo_name/image_name:tag_name
+```
+По умолчанию, во всех скриптах используется `latest` версия. Тэг можно поменять на необходимый.
+
+## Запуск проекта в Yandex Cloud
+1. После подготовки окружения, необходимо создать Secret с переменными окружения Django:
+    Формат YAML-файла:
+    ```yaml
+    apiVersion: v1
+    kind: Secret
+    metadata:
+      name: django-secret
+    type: Opaque
+    data:
+      ALLOWED_HOSTS: <your-base64-encoded-hosts>
+      DATABASE_URL: <your-base64-encoded-db_url>
+      SECRET_KEY: <your-base64-encoded-secret_key>
+      DEBUG: <your-base64-encoded-debug>
+    ```
+    ```
+    kubectl apply -f .\secrets.yaml --namespace=edu-evil-panini
+    ```
+2. Затем создаем Service и Deployment из нашего образа с Docker Hub:
+    ```
+    kubectl create --namespace=<your-namespace> -f ./path/to/django_deployment_service.yaml
+    ```
+    Теперь Django-проект доступен по адресу хоста вашего ALB, в моем случае https://edu-evil-panini.sirius-k8s.dvmn.org/
+3. Для запуска миграций см. раздел [Запуск Job](#запуск-job), необходимо явно указать параметр `namespace`
+4. Для очистки сессий см. раздел [Запус CronJob](#запуск-cronjob), необходимо явно указать параметр `namespace`
