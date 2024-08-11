@@ -15,7 +15,9 @@
   - [Создание Ingress](#создание-ingress)
   - [Запуск CronJob](#запуск-cronjob)
   - [Запуск Job](#запуск-job)
-- [Разработка в Yandex Cloud](#разработка-в-yandex-cloud)
+- [Как подготовить dev-окружение](#как-подготовить-dev-окружение)
+  - [Запуск Service и Deployment из манифеста](#запуск-service-и-deployment-из-манифеста)
+  - [Создание Secrets и Pod с SSL-сертификатом](#создание-secrets-и-pod-с-ssl-сертификатом)
 
 ## Как подготовить окружение к локальной разработке
 
@@ -203,7 +205,7 @@ kubectl get pods
 kubectl logs migrate-pod-name
 ```
 
-## Разработка в Yandex Cloud
+## Как подготовить dev-окружение
 В качестве UI для терминала можно использовать [k9s](https://k9scli.io/), в качестве UI для k8s [Lens Desktop](https://k8slens.dev/)
 Для запуска сервиса в yandex cloud необходимо:
 1. Подключиться к кластеру Yandex cloud
@@ -224,3 +226,23 @@ kubectl logs migrate-pod-name
 kubectl create --namespace=<your-namespace> -f ./path/to/deployment_service.yaml
 ```
 Теперь nginx доступен по адресу хоста вашего ALB, в моем случае https://edu-evil-panini.sirius-k8s.dvmn.org/
+
+### Создание Secrets и Pod с SSL-сертификатом
+Для создания secrets с SSL сертификатом, закодируйте ваш сертификат в формат base64
+
+Для Windows:
+```shell
+    [Convert]::ToBase64String([System.IO.File]::ReadAllBytes("C:\path\to\your.crt")) > ssl_base64.txt
+```
+Для Linux:
+```shell
+ base64 -w 0 your.crt
+```
+Затем вставьте полученные данные в шаблон `.kubernetes_dev\ssl_secret_template.yaml` и запустите команду
+```
+kubectl apply -f .\ssl_secret.yaml --namespace=<yor-namespace>
+```
+Затем можно создать Pod с вмонтированным сертификатом:
+```shell
+kubectl apply -f .\ubuntu_pod_with_secret.yaml --namespace=<yor-namespace>
+```
