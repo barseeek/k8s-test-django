@@ -303,7 +303,8 @@ docker push repo_name/image_name:tag_name
     ```
 2. Затем создаем Service и Deployment из нашего образа с Docker Hub:
     ```
-    kubectl create --namespace=<your-namespace> -f ./path/to/django_deployment_service.yaml
+    kubectl create --namespace=<your-namespace> -f ./path/to/django_deployment.yaml
+    kubectl create --namespace=<your-namespace> -f ./path/to/django_service.yaml
     ```
     Теперь Django-проект доступен по адресу хоста вашего ALB, в моем случае https://edu-evil-panini.sirius-k8s.dvmn.org/
 3. Для запуска миграций см. раздел [Запуск Job](#запуск-job), необходимо явно указать параметр `namespace`
